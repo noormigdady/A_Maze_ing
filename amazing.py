@@ -2,10 +2,9 @@ import sys
 import random
 from generator import MazeGenerator
 from lock_42 import lock_42
-from print_block import print_maze
+from print_maze import print_maze
 from config_parser import config_parser
-from find_path import find_path
-
+from imperfect import imperfecter
 
 
 def menu():
@@ -17,7 +16,6 @@ def menu():
 
 
 def shuffle_colors():
-    BLACK = "\033[30m"
     RED = "\033[31m"
     GREEN = "\033[32m"
     YELLOW = "\033[33m"
@@ -26,13 +24,12 @@ def shuffle_colors():
     CYAN = "\033[36m"
     WHITE = "\033[37m"
 
-    COLORS = [BLACK, RED, GREEN, YELLOW, BLUE, MAGENTA, CYAN, WHITE]
+    COLORS = [RED, GREEN, YELLOW, BLUE, MAGENTA, CYAN, WHITE]
     maze_color = random.choice(COLORS)
+    COLORS.remove(maze_color)
     color_42 = random.choice(COLORS)
     return {"maze_color": maze_color, "color_42": color_42}
 
-def imperfecter(maze, height, width):
-    pass
 
 def produce(file, num):
     show_path = False
@@ -45,20 +42,30 @@ def produce(file, num):
         show_path = True
     if num == 3:
         colors = shuffle_colors()
-    config = config_parser(file)
-    width = config["WIDTH"]
-    height = config["HEIGHT"]
-    entry = config["ENTRY"]
-    Exit = config["EXIT"]
-    perfect = config["PERFECT"]
-    grid = MazeGenerator(height, width)
-    lock_42(grid.grid, height , width)
-    maze = grid.generator(entry)
-    if show_path:
-        path = find_path(maze, height, width, entry, Exit, grid.sequence)
-    if not perfect:
-        imperfecter(maze, height, width)
-    print_maze(maze, height, width, entry, Exit, show_path, colors, path)
+    try:
+        config = config_parser(file)
+        width = config["WIDTH"]
+        height = config["HEIGHT"]
+        entry = config["ENTRY"]
+        Exit = config["EXIT"]
+        perfect = config["PERFECT"]
+        grid = MazeGenerator(height, width)
+        lock_42(grid.grid, height , width)
+        i, j = entry
+        x, y = Exit
+       # print(Exit)
+        if grid.grid[i][j].locked or grid.grid[x][y].locked:
+            raise Exception("ENTRY/EXIT cannot be in 42 logo")
+        maze = grid.generator(entry)
+        #if show_path:
+        #    path = find_path(maze, height, width, entry, Exit, grid.sequence)
+        if not perfect:
+            imperfecter(maze, height, width)
+        print_maze(maze, height, width, entry, Exit, show_path, colors, path)
+    except Exception as e:
+        message = str(e).split(",")
+        print(message[0])
+        exit(0)
     menu()
 
 def main():
@@ -83,8 +90,7 @@ def main():
                 break
             produce(args[1], num)
         except Exception as e:
-            message = str(e).split(",")
-            print(message[0])
+            print(e)
 
 if __name__ == "__main__":
     try:

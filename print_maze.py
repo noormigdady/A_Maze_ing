@@ -1,46 +1,34 @@
-import os
-BLUE = "\033[34m"
-RESET = "\033[0m"
-
-
-def print_maze(maze, height, width):
-
-    # Top border
-    os.system("")
-    print(BLUE + "┌" + "───┬" * (width - 1) + "───┐" + RESET)
-
-    for row in range(height):
-
-        # Cell contents
-        print(BLUE + "│", end="")
-
-        for col in range(width):
-
-            print("   ", end="")
-
-            if maze[row][col].right:
-                print("│", end="")
+def print_maze(maze, height, width, entry, Exit, show_path, colors, path):
+    maze_color = colors["maze_color"]
+    color_42 = colors["color_42"]
+    rows = height * 2 + 1
+    print(maze_color + "█", end="")
+    for j in range(width):
+        print(maze_color + "████", end="")
+    print()
+    for row in range(1, rows - 1):
+        i = (row - 1) // 2
+        print(maze_color + "█", end="")
+        for j in range(width):
+            if maze[i][j].locked:
+                color = color_42
             else:
-                print(" ", end="")
-
-        print(BLUE + RESET)
-
-        # Walls between rows
-        if row < height - 1:
-
-            print(BLUE + "├", end="")
-
-            for col in range(width):
-
-                if maze[row][col].bottom:
-                    print("───", end="")
+                color = maze_color
+            if row % 2 == 0:
+                if maze[i][j].bottom:
+                    print(color + "████", end="")
                 else:
-                    print("   ", end="")
+                    print(color + "   █", end="")
+            else:
+                if maze[i][j].locked:
+                    print(color + "████", end="")
+                elif maze[i][j].right:
+                    print(color + "   █", end="")
+                else:
+                    print(color + "    ", end="")
+        print()
 
-                if col < width - 1:
-                    print("┼", end="")
-
-            print("┤" + RESET)
-
-    # Bottom border
-    print(BLUE + "└" + "───┴" * (width - 1) + "───┘" + RESET)
+    print(maze_color + "█", end="")
+    for j in range(width):
+        print(maze_color + "████", end="")
+    print("\033[37m")
