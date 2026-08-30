@@ -1,59 +1,84 @@
-class DuplicateError(Exception):
-    def __init__(self):
-        super.__init__("Duplicate configuration")
+import sys
+class DuplicateKey(Exception):
+    def __init__(self, key):
+        super().__init__(f"Duplicate value for {key}, already exists")
+
+def check_points(Entry: tuple[int, int], Exit: tuple[int, int], width: int, height: int, file: str) -> None:
+    x, y = Entry
+    i, j = Exit
+    if not (0 <= x < height and 0 <= y < width):
+        raise Exception (f"Invalid ENTRY point, check {file}")
+    if not (0 <= i < height and 0 <= j < width):
+        raise Exception (f"Invalid EXIT point, check {file}")
+    if Entry == Exit:
+        raise Exception (f"ENTRY and EXIT points must be different, check {file}")
 
 
-class FormateError(Exception):
-    def __init__(self):
-        super.__init__("Invalid formate, must be KEY=VALUE")
-
-
+        
 def config_parser(file):
     required = ["HEIGHT", "WIDTH", "ENTRY", "EXIT", "PERFECT", "OUTPUT_FILE"]
-    CONFIG = {}
+    config = {}
     with open(file, "r") as f:
-        for line in f:
+        for line in f :
             if line.startswith("#"):
                 continue
-            if "=" not in line:
-                raise FormateError
-            lst = line.strip().split("=")
+            lst = line.split("=")
+            lst[0] = lst[0].lower().strip()
+            lst[1] = lst[1].strip()
             if len(lst) != 2:
-                raise FormateError
-            if lst[0] in ["HEIGHT", "WIDTH"]:
-                if lst[0] in CONFIG:
-                    raise DuplicateError
-                CONFIG[lst[0]] = int(lst[1])
-            if lst[0] in ["ENTRY", "EXIT"]:
-                if lst[0] in CONFIG:
-                    raise DuplicateError
+                raise Exception("Invalid formate, must be KEY=VALUE")
+            if lst[0] in ["width", "height"]:
+                if lst[0].upper() in config:
+                    raise DuplicateKey(lst[0].upper())
+                try:
+                    value = int(lst[1])
+                    config[lst[0].upper()] = value
+                except Exception:
+                    print(f"Invalid value for {lst[0].upper()}, must be an integer")
+                    sys.exit(1)
+            if lst[0] in ["entry", "exit"]:
                 pair = lst[1].split(",")
-                i, j = pair
                 if len(pair) != 2:
-                    raise Exception("ENTRY/EXIT must be pairs (a, b)")
-                CONFIG[lst[0]] = (int(i), int(j))
-            if lst[0] == "OUTPUT_FILE":
-                if not lst[1].strip("\n").endswith(".txt"):
-                    raise Exception("Invalid file extention, must be .txt")
-                CONFIG[lst[0]] = lst[1]
-            if lst[0] == "PERFECT":
+                    raise Exception(f"Invalid formate {lst[0].upper()}")
+                try:
+                    i = int(pair[0])
+                    j = int(pair[1])
+                    config[lst[0].upper()] = (i, j)
+                except Exception:
+                    print(f"Invalid values for pair {lst[0].upper()}, must be integers x, y")
+                    sys.exit(1)
+            if lst[0] == "perfect":
                 if lst[1].lower() == "true":
-                    CONFIG[lst[0]] = True
-                if lst[1].lower == "false":
-                    CONFIG[lst[0]] = False
+                    config[lst[0].upper()] = True
+                elif lst[1].lower() == "false":
+                    config[lst[0].upper()] = False
+                else:
+                    raise Exception("Invalid value for PERFECT, must be either True or False")
+            if lst[0] == "output_file":
+                if not lst[1].endswith(".txt"):
+                    raise Exception("Invalid extention, must be .txt")
+                config["OUTPUT_FILE"] = lst[1]
             if lst[0] == "SEED":
-                CONFIG["SEED"] = lst[1]
+                try:
+                    config["SEED"] = int(lst[1])
+                except Exception:
+                    print("Invalid value for SEED, must be an integer")
+                    sys.exit(1)
+        for item in required:
+            if item not in config:
+                raise Exception(f"MISSING {item}, Modify your config.txt")
+        try:
+            check_points(config["ENTRY"] ,config["EXIT"], config["WIDTH"], config["HEIGHT"], file)
+        except Exception as e:
+            print(e)
+            sys.exit(1)
+    return config
 
-        for i in required:
-            if i not in CONFIG:
-                raise Exception(f"MISSING A REQUIRED CONFIGURATION <{i}>")
-    return CONFIG
+
 
 
 if __name__ == "__main__":
     try:
-        config = config_parser("config.txt")
-        print(config)
+        print(config_parser("config.txt"))
     except Exception as e:
-        message = str(e).split(",")
-        print(message[0])
+        print(e)

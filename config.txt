@@ -1,7 +1,7 @@
-WIDTH=20
-HEIGHT=20
-ENTRY=0,0
-EXIT=20, 12
-OUTPUT_FILE=maze.txt
-PERFECT=True
+width=20
+height=20
+entry=0, 0
+exit=19, 19
+output_file=maze.txt
+perfect=True
 #this isn't supposed to do anyting  
